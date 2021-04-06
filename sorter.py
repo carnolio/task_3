@@ -3,8 +3,7 @@ import click,eyed3,shutil,os
 Реализовать консольное (CLI) приложение для сортировки музыкальных файлов по исполнителям и альбомам:
 программа анализирует файлы в исходной директории, считывает ID3-теги, извлекает из них информацию о названии трека, исполнителе и альбоме;
 
-если в тегах нет информации о названии трека, использует оригинальное имя файла;
-если в тегах нет информации об исполнителе или альбоме, пропускает файл, оставляя его без изменений в исходной директории.
+
 программа должна принимать 3 ключа командной строки:
 --help - вывести справочное сообщение;
 -s | --src-dir - исходная директория, по умолчанию ".";
@@ -36,9 +35,19 @@ def hello():
     click.echo('Hello World!')
 
 srcDir=".\music"
+
 mp3s = os.listdir(path=srcDir)
 
 #print (os.name)
+def checkName (filename):
+    # escList = ['\\','/',':','*','<','>','|']
+    fname=""
+    escList = ['/', ':','*','?','<', '>', '|']
+    for i in filename:
+        if i in escList:
+            continue
+        fname += i
+    return fname
 
 for mp3 in mp3s:
     print("file: ", mp3)
@@ -46,46 +55,54 @@ for mp3 in mp3s:
         delim = "\\"
     else:
         delim = "/"
-    try:
-        audiofile = eyed3.load(srcDir + delim + mp3)
+#try:
+    title, album, artist = "", "", ""
+    isMove = True
+    audiofile = eyed3.load(srcDir + delim + mp3)
+    print(audiofile)
+    if audiofile.tag.title != None:
         title = audiofile.tag.title.encode("cp1252").decode("cp1251")
         title = title.strip()
+    if audiofile.tag.artist != None:
         artist = audiofile.tag.artist.encode("cp1252").decode("cp1251")
         artist = artist.strip()
+    if audiofile.tag.album != None:
         album = audiofile.tag.album.encode("cp1252").decode("cp1251")
         album = album.strip()
-    except Exception:
-        print("No ID3 Tag")
-    finally:
-        print("title:"+title)
-        print("artist:"+artist)
-        print("album:"+album)
-
-
+#except Exception:
+    #print("No ID3 Tag")
+#finally:
+    print("title:"+title)
+    print("artist:"+artist)
+    print("album:"+album)
 
     #audiofile.tag.save()
 
     # группирует файлы  по исполнителям и альбомам, так, чтобы получить структуру директорий
     # <директория назначения>/<исполнитель>/<альбом>/<имя файла>.mp3
-    try:
-        newPath = srcDir+delim+artist+delim+album+delim
-        print("try create dir:"+newPath)
-        os.makedirs(newPath, mode=0o777, exist_ok=False)
+    #try:
         # если в тегах нет информации о названии трека, использует оригинальное имя файла
-        if title == None:
-            newFileName = mp3
-        # переименовывает файлы по схеме <название трека> - <исполнитель> - <альбом>.mp3;
-        else:
-            newFileName = title+" - "+artist+" - "+album+".mp3"
-            print(newPath+newFileName)
-            os.rename(mp3,newFileName)
-            # в ходе работы программа должна выводить лог действий в виде
-            # <путь до исходного файла> -> <путь до файла результата>;
-            # print(path+'\\'+mp3)
-            # ./ Duhast.mp3 -> / home / user / some / directory / Rammstein / Sehnsucht / Duhast - Rammstein - Sehnsucht.mp3
-
-    except Exception:
-        print("error")
+    if title == None:
+        newFileName = mp3
+    #если в тегах нет информации об исполнителе или альбоме, пропускает файл, оставляя его без изменений в исходной директории.
+    elif artist == "" or album == "":
+        isMove = False
+    # переименовывает файлы по схеме <название трека> - <исполнитель> - <альбом>.mp3;
+    if isMove:
+        newFileName = checkName(title+" - "+artist+" - "+album+".mp3")
+        newPath = checkName(srcDir + delim + artist + delim + album + delim)
+        print(newPath + newFileName)
+        print("try create dir:" + newPath)
+        print("chechedName:",checkName(newPath))
+        os.makedirs(newPath, mode=0o777, exist_ok=False)
+        os.rename(srcDir+delim+mp3, newFileName)
+        shutil.move(newFileName, newPath)
+        # в ходе работы программа должна выводить лог действий в виде
+        # <путь до исходного файла> -> <путь до файла результата>;
+        # print(path+'\\'+mp3)
+        # ./ Duhast.mp3 -> / home / user / some / directory / Rammstein / Sehnsucht / Duhast - Rammstein - Sehnsucht.mp3
+    #except Exception:
+    #    print("error")
 
 
     #shutil.move(src, dst, copy_function=copy2)
