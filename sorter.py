@@ -46,16 +46,20 @@ for mp3 in mp3s:
         delim = "\\"
     else:
         delim = "/"
-    audiofile = eyed3.load(srcDir + delim + mp3)
-    title = audiofile.tag.title.encode("cp1252").decode("cp1251")
-    title = title.strip()
-    artist = audiofile.tag.artist.encode("cp1252").decode("cp1251")
-    artist = artist.strip()
-    album = audiofile.tag.album.encode("cp1252").decode("cp1251")
-    album = album.strip()
-    print("title:"+title)
-    print("artist:"+artist)
-    print("album:"+album)
+    try:
+        audiofile = eyed3.load(srcDir + delim + mp3)
+        title = audiofile.tag.title.encode("cp1252").decode("cp1251")
+        title = title.strip()
+        artist = audiofile.tag.artist.encode("cp1252").decode("cp1251")
+        artist = artist.strip()
+        album = audiofile.tag.album.encode("cp1252").decode("cp1251")
+        album = album.strip()
+    except Exception:
+        print("No ID3 Tag")
+    finally:
+        print("title:"+title)
+        print("artist:"+artist)
+        print("album:"+album)
 
 
 
