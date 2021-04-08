@@ -1,0 +1,27 @@
+/*
+Вывести 10 клиентов (id, имя, номер телефона, компания), которых обслужлуживают сотрудники старше 50 лет, оплативших музыку в любом жанре кроме Rock, выходные данные должны быть отсортированы по городу клиента в алфавитном порядке и емейлу в обратном.
+*/
+
+    SELECT DISTINCT Customer.CustomerId, Customer.FirstName, Customer.Phone, Customer.Company
+    FROM Customer
+    INNER JOIN Employee ON Customer.SupportRepId = Employee.EmployeeId AND Employee.BirthDate > DATE('now', '-50 years')
+    INNER JOIN Invoice ON Customer.CustomerId = Invoice.CustomerId
+    INNER JOIN InvoiceLine ON Invoice.InvoiceId = InvoiceLine.InvoiceId
+    INNER JOIN Track ON Track.TrackId = InvoiceLine.TrackId
+    WHERE Track.GenreId is not 1
+    ORDER BY Customer.City ASC, Customer.Email DESC
+    LIMIT 10
+
+/*Вывести список пользователей (полное имя, телефон) с указанием руководителя (полное имя, телефон).*/
+
+    SELECT Customer.FirstName || ' ' || Customer.LastName as CustomerFio, Customer.Phone, Employee.FirstName || ' ' || Employee.LastName as EmployeeFio, Employee.Phone
+    FROM Customer
+    INNER JOIN Employee ON Customer.SupportRepId = Employee.EmployeeId
+	
+/*Вывести отсортированный список клиентов (имя, телефон) оплативших самые дорогие музыкальные треки.*/
+
+    SELECT DISTINCT Customer.FirstName , Customer.Phone FROM Customer
+    INNER JOIN Invoice ON Customer.CustomerId = Invoice.CustomerId
+    INNER JOIN InvoiceLine ON Invoice.InvoiceId = InvoiceLine.InvoiceId
+    WHERE InvoiceLine.UnitPrice = (SELECT MAX(UnitPrice) FROM InvoiceLine)
+    ORDER BY Customer.FirstName ASC
