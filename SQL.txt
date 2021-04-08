@@ -25,3 +25,11 @@
     INNER JOIN InvoiceLine ON Invoice.InvoiceId = InvoiceLine.InvoiceId
     WHERE InvoiceLine.UnitPrice = (SELECT MAX(UnitPrice) FROM InvoiceLine)
     ORDER BY Customer.FirstName ASC
+
+/*Вывести покупателей (полное имя, номер телефона) которые что либо покупали,  проживающих в одном городе, если их кол-во в городе больше 1.*/
+SELECT DISTINCT Customer.FirstName || ' ' || Customer.LastName as FIO, Customer.Phone FROM Customer
+INNER JOIN Invoice ON Invoice.CustomerId = Customer.CustomerId
+WHERE Invoice.total > 0 AND Customer.City 
+IN (Select Customer.City FROM Customer
+	GROUP BY (Customer.City)
+	HAVING count(Customer.City) > 1)
