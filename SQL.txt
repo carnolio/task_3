@@ -33,3 +33,20 @@ WHERE Invoice.total > 0 AND Customer.City
 IN (Select Customer.City FROM Customer
 	GROUP BY (Customer.City)
 	HAVING count(Customer.City) > 1)
+
+/*Вывести топ 3 самых платежеспособных города за все время.*/
+SELECT Invoice.BillingCity FROM Invoice
+GROUP BY Invoice.BillingCity
+ORDER BY SUM(Invoice.total) DESC
+LIMIT 3
+/*Вывести самый популярный, на основании кол-ва продаж, жанр (название) и все треки в нем (название, альбом, исполнитель).*/
+SELECT Genre.Name, Track.Name, Track.Composer, Album.Title FROM Track
+INNER JOIN Album ON Album.AlbumId = Track.AlbumId
+INNER JOIN Genre ON Track.GenreId = Genre.GenreId
+WHERE Track.GenreId = ( SELECT Genre.GenreId from Track
+						INNER JOIN InvoiceLine ON Track.TrackId = InvoiceLine.TrackId
+						INNER JOIN Genre Genre ON Track.GenreId = Genre.GenreId
+						GROUP BY Genre.Name
+						--от самого популярного
+						ORDER BY sum(InvoiceLine.Quantity) DESC
+						LIMIT 1)
