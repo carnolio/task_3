@@ -1,4 +1,4 @@
-import click,eyed3,shutil,os
+import eyed3,shutil,os,argparse
 '''
 Реализовать консольное (CLI) приложение для сортировки музыкальных файлов по исполнителям и альбомам:
 программа анализирует файлы в исходной директории, считывает ID3-теги, извлекает из них информацию о названии трека, исполнителе и альбоме;
@@ -25,19 +25,30 @@ Done.
 $ ./sorter.py --dst-dir=/home/user/some/directory
 ...
 '''
-@click.command()
-@click.option('--sourceFolder','-s', default='./', help='Source dir. Default = ./')
-@click.option('--destFolder','-d', default='./', help='Destination dir. Default = ./')
-def hello():
-    click.echo('Hello World!')
+parser = argparse.ArgumentParser(description='Sort music files by artist albun and track')
+parser.add_argument(
+        '-s',
+        '--src_dir',
+        type=str,
+        #текущая директория
+        default=os.getcwd(),
+        help='Source directory def.\\')
+parser.add_argument(
+        '-d',
+        '--dst_dir',
+        type=str,
+        default=os.getcwd(),
+        help='Destination directory def.\\')
 
-srcDir=".\music"
+namespace = parser.parse_args()
+dst_dir = namespace.dst_dir
+src_dir = namespace.src_dir
 
-mp3s = os.listdir(path=srcDir)
+mp3s = os.listdir(path=src_dir)
 
 #print (os.name)
 def checkName (filename):
-    # escList = ['\\','/',':','*','<','>','|','?']
+    escList = ['\\','/',':','*','<','>','|','?']
     fname=""
     escList = ['/', ':','*','?','<', '>', '|']
     for i in filename:
@@ -46,9 +57,8 @@ def checkName (filename):
         fname += i
     return fname
 
-hello()
+
 for mp3 in mp3s:
-    #print("file: ", mp3)
     if os.name == "nt":
         delim = "\\"
     else:
@@ -56,9 +66,8 @@ for mp3 in mp3s:
 #try:
     title, album, artist = "", "", ""
     isMove = True
-    audiofile = eyed3.load(srcDir + delim + mp3)
-    #print(audiofile)
-    if audiofile and audiofile.tag:
+    audiofile = eyed3.load(src_dir + delim + mp3)
+    if audiofile and audiofile.tag and os.name == "nt":
         if audiofile.tag.title != None:
             title = audiofile.tag.title.encode("cp1252").decode("cp1251")
             title = title.strip()
@@ -68,37 +77,27 @@ for mp3 in mp3s:
         if audiofile.tag.album != None:
             album = audiofile.tag.album.encode("cp1252").decode("cp1251")
             album = album.strip()
-#except Exception:
-    #print("No ID3 Tag")
-#finally:
-    #print("title:"+title)
-    #print("artist:"+artist)
-    #print("album:"+album)
-
-    #audiofile.tag.save()
 
     # группирует файлы  по исполнителям и альбомам, так, чтобы получить структуру директорий
     # <директория назначения>/<исполнитель>/<альбом>/<имя файла>.mp3
-    #try:
-        # если в тегах нет информации о названии трека, использует оригинальное имя файла
+    # если в тегах нет информации о названии трека, использует оригинальное имя файла
     if title == None:
         newFileName = mp3
+        newPath = src_dir+delim
     #если в тегах нет информации об исполнителе или альбоме, пропускает файл, оставляя его без изменений в исходной директории.
     elif artist == "" or album == "":
+        newFileName = mp3
+        newPath = src_dir+delim
         isMove = False
     # переименовывает файлы по схеме <название трека> - <исполнитель> - <альбом>.mp3;
     if isMove:
         newFileName = checkName(title+" - "+artist+" - "+album+".mp3")
-        newPath = checkName(srcDir + delim + artist + delim + album + delim)
-        #print(newPath + newFileName)
-        #print("try create dir:" + newPath)
-        #print("chechedName:",checkName(newPath))
+        newPath = checkName(src_dir + delim + artist + delim + album + delim)
         os.makedirs(newPath, mode=0o777, exist_ok=False)
-        os.rename(srcDir+delim+mp3, newFileName)
+        os.rename(src_dir+delim+mp3, newFileName)
         shutil.move(newFileName, newPath)
         # в ходе работы программа должна выводить лог действий в виде
         # <путь до исходного файла> -> <путь до файла результата>;
-        # print(path+'\\'+mp3)
-        # ./ Duhast.mp3 -> / home / user / some / directory / Rammstein / Sehnsucht / Duhast - Rammstein - Sehnsucht.mp3
+    print("{}{}{} -->{}{}".format(src_dir,delim,mp3,newPath,newFileName))
 
     #log = '{}'
